@@ -55,6 +55,15 @@
                 
                 <input type="date" id="dateFilter" onchange="filterItems()" title="Filter by purchase date">
             </div>
+
+            <div class="view-toggle">
+                <button class="view-btn active" id="cardViewBtn" onclick="switchView('card')">
+                    <i class="fas fa-th-large"></i> Card View
+                </button>
+                <button class="view-btn" id="tableViewBtn" onclick="switchView('table')">
+                    <i class="fas fa-table"></i> Table View
+                </button>
+            </div>
         </div>
 
         <!-- Low Stock Alert -->
@@ -69,6 +78,27 @@
         <main class="dashboard">
             <div class="items-grid" id="itemsGrid">
                 <!-- Items will be populated here -->
+            </div>
+
+            <!-- Table View -->
+            <div class="items-table-container" id="itemsTableContainer" style="display: none;">
+                <table class="items-table" id="itemsTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable(0)">Item Name <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(1)">Category <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(2)">Location <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(3)">Quantity <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(4)">Price <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(5)">Purchase Date <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(6)">Description <i class="fas fa-sort"></i></th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                        <!-- Table rows will be populated here -->
+                    </tbody>
+                </table>
             </div>
         </main>
 

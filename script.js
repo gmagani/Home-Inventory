@@ -39,6 +39,9 @@ let inventoryItems = [
 ];
 
 let filteredItems = [...inventoryItems];
+let currentView = 'card'; // 'card' or 'table'
+let sortColumn = -1;
+let sortDirection = 'asc';
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
@@ -59,8 +62,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Render items in the grid
+// Render items in the grid or table
 function renderItems() {
+    if (currentView === 'card') {
+        renderCardView();
+    } else {
+        renderTableView();
+    }
+}
+
+// Render items in card view
+function renderCardView() {
     const itemsGrid = document.getElementById('itemsGrid');
     itemsGrid.innerHTML = '';
 
@@ -71,6 +83,21 @@ function renderItems() {
 
     if (filteredItems.length === 0) {
         itemsGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">No items found matching your criteria.</div>';
+    }
+}
+
+// Render items in table view
+function renderTableView() {
+    const tableBody = document.getElementById('itemsTableBody');
+    tableBody.innerHTML = '';
+
+    filteredItems.forEach(item => {
+        const row = createTableRow(item);
+        tableBody.appendChild(row);
+    });
+
+    if (filteredItems.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #666;">No items found matching your criteria.</td></tr>';
     }
 }
 
@@ -103,6 +130,36 @@ function createItemCard(item) {
     `;
 
     return card;
+}
+
+// Create table row element
+function createTableRow(item) {
+    const row = document.createElement('tr');
+    
+    const quantityClass = item.quantity <= item.lowStockThreshold ? 'low' : 'normal';
+    
+    row.innerHTML = `
+        <td><strong>${item.name}</strong></td>
+        <td>${item.category}</td>
+        <td>${item.location}</td>
+        <td><span class="table-quantity ${quantityClass}">${item.quantity}</span></td>
+        <td class="table-price">$${item.price?.toFixed(2) || 'N/A'}</td>
+        <td>${item.purchaseDate || 'N/A'}</td>
+        <td class="table-description" title="${item.description || 'No description'}">${item.description || 'No description'}</td>
+        <td class="table-actions">
+            <button class="table-action-btn btn-view" onclick="openItemModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                <i class="fas fa-eye"></i> View
+            </button>
+            <button class="table-action-btn btn-edit" onclick="quickEdit(${item.id})">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="table-action-btn btn-delete" onclick="deleteItem(${item.id})">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </td>
+    `;
+    
+    return row;
 }
 
 // Render low stock items
@@ -629,4 +686,83 @@ Would you like to see manual setup instructions?
     if (confirm(errorMsg)) {
         showManualSetupInstructions();
     }
+}
+
+// View switching functions
+function switchView(viewType) {
+    currentView = viewType;
+    
+    const cardViewBtn = document.getElementById('cardViewBtn');
+    const tableViewBtn = document.getElementById('tableViewBtn');
+    const itemsGrid = document.getElementById('itemsGrid');
+    const itemsTableContainer = document.getElementById('itemsTableContainer');
+    
+    if (viewType === 'card') {
+        cardViewBtn.classList.add('active');
+        tableViewBtn.classList.remove('active');
+        itemsGrid.style.display = 'grid';
+        itemsTableContainer.style.display = 'none';
+    } else {
+        cardViewBtn.classList.remove('active');
+        tableViewBtn.classList.add('active');
+        itemsGrid.style.display = 'none';
+        itemsTableContainer.style.display = 'block';
+    }
+    
+    renderItems();
+}
+
+// Table sorting function
+function sortTable(columnIndex) {
+    if (sortColumn === columnIndex) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortColumn = columnIndex;
+        sortDirection = 'asc';
+    }
+    
+    const columnNames = ['name', 'category', 'location', 'quantity', 'price', 'purchaseDate', 'description'];
+    const sortKey = columnNames[columnIndex];
+    
+    filteredItems.sort((a, b) => {
+        let aVal = a[sortKey];
+        let bVal = b[sortKey];
+        
+        // Handle numeric columns
+        if (sortKey === 'quantity' || sortKey === 'price') {
+            aVal = parseFloat(aVal) || 0;
+            bVal = parseFloat(bVal) || 0;
+        }
+        
+        // Handle date column
+        if (sortKey === 'purchaseDate') {
+            aVal = new Date(aVal || '1900-01-01');
+            bVal = new Date(bVal || '1900-01-01');
+        }
+        
+        // Handle string columns
+        if (typeof aVal === 'string') {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+        }
+        
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+    
+    renderItems();
+    updateSortIcons(columnIndex);
+}
+
+// Update sort icons in table headers
+function updateSortIcons(activeColumn) {
+    const headers = document.querySelectorAll('.items-table th i');
+    headers.forEach((icon, index) => {
+        if (index === activeColumn) {
+            icon.className = sortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
+        } else {
+            icon.className = 'fas fa-sort';
+        }
+    });
 }
