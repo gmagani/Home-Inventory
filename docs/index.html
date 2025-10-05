@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Inventory Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-home"></i> Home Inventory</h1>
+                <div class="header-buttons">
+                    <button class="settings-btn" onclick="openSettingsModal()" title="Settings">
+                        <i class="fas fa-cog"></i> Settings
+                    </button>
+                    <button class="reload-btn" onclick="loadFromGoogleSheets()" title="Reload from Google Sheets">
+                        <i class="fas fa-sync-alt"></i> Reload
+                    </button>
+                    <button class="add-item-btn" onclick="openAddItemModal()">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search and Filters -->
+        <div class="search-filter-section">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search items..." oninput="filterItems()">
+            </div>
+            
+            <div class="filters">
+                <select id="categoryFilter" onchange="filterItems()">
+                    <option value="">All Categories</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Furniture">Furniture</option>
+                    <option value="Appliances">Appliances</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Books">Books</option>
+                </select>
+                
+                <select id="locationFilter" onchange="filterItems()">
+                    <option value="">All Locations</option>
+                    <option value="Living Room">Living Room</option>
+                    <option value="Bedroom">Bedroom</option>
+                    <option value="Kitchen">Kitchen</option>
+                    <option value="Garage">Garage</option>
+                    <option value="Basement">Basement</option>
+                </select>
+                
+                <input type="date" id="dateFilter" onchange="filterItems()" title="Filter by purchase date">
+            </div>
+
+            <div class="view-toggle">
+                <button class="view-btn active" id="cardViewBtn" onclick="switchView('card')">
+                    <i class="fas fa-th-large"></i> Card View
+                </button>
+                <button class="view-btn" id="tableViewBtn" onclick="switchView('table')">
+                    <i class="fas fa-table"></i> Table View
+                </button>
+            </div>
+        </div>
+
+        <!-- Low Stock Alert -->
+        <div class="low-stock-section" id="lowStockSection">
+            <h3><i class="fas fa-exclamation-triangle"></i> Low Stock Items</h3>
+            <div class="low-stock-items" id="lowStockItems">
+                <!-- Low stock items will be populated here -->
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <div class="items-grid" id="itemsGrid">
+                <!-- Items will be populated here -->
+            </div>
+
+            <!-- Table View -->
+            <div class="items-table-container" id="itemsTableContainer" style="display: none;">
+                <table class="items-table" id="itemsTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable(0)">Item Name <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(1)">Category <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(2)">Location <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(3)">Quantity <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(4)">Price <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(5)">Purchase Date <i class="fas fa-sort"></i></th>
+                            <th onclick="sortTable(6)">Description <i class="fas fa-sort"></i></th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                        <!-- Table rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <!-- Item Detail Modal -->
+        <div class="modal" id="itemModal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <div class="modal-body" id="modalBody">
+                    <!-- Item details will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Item Modal -->
+        <div class="modal" id="addItemModal">
+            <div class="modal-content">
+                <span class="close" onclick="closeAddItemModal()">&times;</span>
+                <div class="modal-body">
+                    <h2>Add New Item</h2>
+                    <form id="addItemForm">
+                        <div class="form-group">
+                            <label for="itemName">Item Name</label>
+                            <input type="text" id="itemName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="itemCategory">Category</label>
+                            <select id="itemCategory" required>
+                                <option value="">Select Category</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Furniture">Furniture</option>
+                                <option value="Appliances">Appliances</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Books">Books</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="itemLocation">Location</label>
+                            <select id="itemLocation" required>
+                                <option value="">Select Location</option>
+                                <option value="Living Room">Living Room</option>
+                                <option value="Bedroom">Bedroom</option>
+                                <option value="Kitchen">Kitchen</option>
+                                <option value="Garage">Garage</option>
+                                <option value="Basement">Basement</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="itemQuantity">Quantity</label>
+                            <input type="number" id="itemQuantity" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="itemPrice">Price ($)</label>
+                            <input type="number" id="itemPrice" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="itemPurchaseDate">Purchase Date</label>
+                            <input type="date" id="itemPurchaseDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="itemImage">Upload Image</label>
+                            <input type="file" id="itemImage" accept="image/*" onchange="previewImage(this)">
+                            <div class="image-preview" id="imagePreview"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="itemDescription">Description</label>
+                            <textarea id="itemDescription" rows="3"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" onclick="closeAddItemModal()">Cancel</button>
+                            <button type="submit">Add Item</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal" id="settingsModal">
+            <div class="modal-content">
+                <span class="close" onclick="closeSettingsModal()">&times;</span>
+                <div class="modal-body">
+                    <h2>Settings</h2>
+                    <div class="form-group">
+                        <label for="googleApiKey">Google Sheets API Key</label>
+                        <input type="password" id="googleApiKey" placeholder="Enter your Google Sheets API key">
+                        <small>Get your API key from <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="spreadsheetId">Spreadsheet ID</label>
+                        <input type="text" id="spreadsheetId" value="1nSxUmaf0bmc97YR_51-L0uLqi1AC6meFbFFNedZJUeE" readonly>
+                        <small>Current spreadsheet ID (read-only)</small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="closeSettingsModal()">Cancel</button>
+                        <button type="button" onclick="saveSettings()">Save Settings</button>
+                        <button type="button" onclick="testConnection()" style="background: #28a745;">Test Connection</button>
+                        <button type="button" onclick="populateWithSampleData()" style="background: #ffc107; color: #212529;">Add Sample Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
