@@ -59,8 +59,96 @@ document.addEventListener('DOMContentLoaded', function() {
         
         renderItems();
         renderLowStockItems();
+        populateCategoryOptions(); // Populate category dropdowns with sample data
+        populateLocationOptions(); // Populate location dropdowns with sample data
     });
 });
+
+// Populate category dropdowns dynamically
+function populateCategoryOptions() {
+    // Get unique categories from inventory items
+    const uniqueCategories = [...new Set(inventoryItems.map(item => item.category).filter(category => category && category.trim() !== ''))];
+    uniqueCategories.sort(); // Sort alphabetically
+    
+    // Update category filter dropdown
+    const categoryFilter = document.getElementById('categoryFilter');
+    const currentFilterValue = categoryFilter.value; // Preserve current selection
+    
+    // Clear existing options except the first "All Categories" option
+    categoryFilter.innerHTML = '<option value="">All Categories</option>';
+    
+    // Add unique categories
+    uniqueCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        if (category === currentFilterValue) {
+            option.selected = true;
+        }
+        categoryFilter.appendChild(option);
+    });
+    
+    // Update add item modal category dropdown
+    const itemCategory = document.getElementById('itemCategory');
+    const currentItemValue = itemCategory.value; // Preserve current selection
+    
+    // Clear existing options except the first "Select Category" option
+    itemCategory.innerHTML = '<option value="">Select Category</option>';
+    
+    // Add unique categories
+    uniqueCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        if (category === currentItemValue) {
+            option.selected = true;
+        }
+        itemCategory.appendChild(option);
+    });
+}
+
+// Populate location dropdowns dynamically
+function populateLocationOptions() {
+    // Get unique locations from inventory items
+    const uniqueLocations = [...new Set(inventoryItems.map(item => item.location).filter(location => location && location.trim() !== ''))];
+    uniqueLocations.sort(); // Sort alphabetically
+    
+    // Update location filter dropdown
+    const locationFilter = document.getElementById('locationFilter');
+    const currentFilterValue = locationFilter.value; // Preserve current selection
+    
+    // Clear existing options except the first "All Locations" option
+    locationFilter.innerHTML = '<option value="">All Locations</option>';
+    
+    // Add unique locations
+    uniqueLocations.forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        if (location === currentFilterValue) {
+            option.selected = true;
+        }
+        locationFilter.appendChild(option);
+    });
+    
+    // Update add item modal location dropdown
+    const itemLocation = document.getElementById('itemLocation');
+    const currentItemValue = itemLocation.value; // Preserve current selection
+    
+    // Clear existing options except the first "Select Location" option
+    itemLocation.innerHTML = '<option value="">Select Location</option>';
+    
+    // Add unique locations
+    uniqueLocations.forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        if (location === currentItemValue) {
+            option.selected = true;
+        }
+        itemLocation.appendChild(option);
+    });
+}
 
 // Render items in the grid or table
 function renderItems() {
@@ -114,7 +202,7 @@ function createItemCard(item) {
         <div class="item-details">
             <h3>${item.name}</h3>
             <div class="item-meta">
-                <span>Qty: <span class="${item.quantity <= item.lowStockThreshold ? 'quantity-low' : 'quantity-normal'}">${item.quantity}</span></span>
+                <span>Qty: <span class="${item.quantity < item.lowStockThreshold ? 'quantity-low' : 'quantity-normal'}">${item.quantity}</span></span>
                 <span>$${item.price?.toFixed(2) || 'N/A'}</span>
             </div>
             <div class="item-tags">
@@ -136,7 +224,7 @@ function createItemCard(item) {
 function createTableRow(item) {
     const row = document.createElement('tr');
     
-    const quantityClass = item.quantity <= item.lowStockThreshold ? 'low' : 'normal';
+    const quantityClass = item.quantity < item.lowStockThreshold ? 'low' : 'normal';
     
     row.innerHTML = `
         <td><strong>${item.name}</strong></td>
@@ -167,7 +255,7 @@ function renderLowStockItems() {
     const lowStockSection = document.getElementById('lowStockSection');
     const lowStockItems = document.getElementById('lowStockItems');
     
-    const lowStockList = inventoryItems.filter(item => item.quantity <= item.lowStockThreshold);
+    const lowStockList = inventoryItems.filter(item => item.quantity < item.lowStockThreshold);
     
     if (lowStockList.length === 0) {
         lowStockSection.style.display = 'none';
@@ -316,6 +404,8 @@ document.getElementById('addItemForm').addEventListener('submit', function(e) {
     
     renderItems();
     renderLowStockItems();
+    populateCategoryOptions(); // Refresh category options when new item is added
+    populateLocationOptions(); // Refresh location options when new item is added
     closeAddItemModal();
     
     alert('Item added successfully!');
@@ -352,6 +442,8 @@ function deleteItem(itemId) {
         filteredItems = [...inventoryItems];
         renderItems();
         renderLowStockItems();
+        populateCategoryOptions(); // Refresh category options when item is deleted
+        populateLocationOptions(); // Refresh location options when item is deleted
         closeModal();
         
         // Here you would delete from Google Sheet
@@ -491,6 +583,8 @@ async function loadFromGoogleSheets() {
         filteredItems = [...inventoryItems];
         renderItems();
         renderLowStockItems();
+        populateCategoryOptions(); // Populate category dropdowns with data from Google Sheets
+        populateLocationOptions(); // Populate location dropdowns with data from Google Sheets
         
         console.log(`Successfully loaded ${inventoryItems.length} items from Google Sheets`);
         
@@ -559,134 +653,11 @@ async function uploadImageToGoogleDrive(imageFile) {
     console.log('Uploading image to Google Drive...');
 }
 
-// Function to populate Google Sheets with sample data
-async function populateWithSampleData() {
-    const SPREADSHEET_ID = '1nSxUmaf0bmc97YR_51-L0uLqi1AC6meFbFFNedZJUeE';
-    const API_KEY = localStorage.getItem('googleSheetsApiKey') || 'AIzaSyCNRmSZkvCLPNisXGi0FjVQKEXNfNoN4fo';
-    
-    if (!API_KEY || API_KEY === 'YOUR_GOOGLE_SHEETS_API_KEY') {
-        alert('Please configure your Google Sheets API key first in Settings.');
-        return;
-    }
 
-    // Show instructions for manual setup
-    const manualSetup = confirm(
-        'Automated data upload requires special permissions.\n\n' +
-        'Click OK to see manual setup instructions, or Cancel to try automated upload anyway.'
-    );
 
-    if (manualSetup) {
-        showManualSetupInstructions();
-        return;
-    }
 
-    const sampleData = [
-        // Header row
-        ['Item Name', 'Category', 'Location', 'Quantity', 'Price', 'Purchase Date', 'Description', 'Image URL', 'Low Stock Threshold'],
-        // Sample data rows
-        ['MacBook Pro', 'Electronics', 'Living Room', '1', '2499.99', '2023-01-15', '13-inch MacBook Pro with M2 chip', 'https://via.placeholder.com/300x200?text=MacBook+Pro', '1'],
-        ['Gaming Chair', 'Furniture', 'Bedroom', '0', '299.99', '2023-03-10', 'Ergonomic gaming chair with lumbar support', 'https://via.placeholder.com/300x200?text=Gaming+Chair', '1'],
-        ['Coffee Maker', 'Appliances', 'Kitchen', '1', '149.99', '2023-02-20', 'Programmable drip coffee maker', 'https://via.placeholder.com/300x200?text=Coffee+Maker', '1'],
-        ['Wireless Headphones', 'Electronics', 'Living Room', '2', '199.99', '2023-04-05', 'Noise-cancelling wireless headphones', 'https://via.placeholder.com/300x200?text=Headphones', '1'],
-        ['Dining Table', 'Furniture', 'Kitchen', '1', '899.99', '2022-12-10', 'Solid wood dining table for 6 people', 'https://via.placeholder.com/300x200?text=Dining+Table', '1'],
-        ['Smart TV', 'Electronics', 'Living Room', '1', '1299.99', '2023-06-20', '55-inch 4K Smart TV with HDR', 'https://via.placeholder.com/300x200?text=Smart+TV', '1'],
-        ['Office Chair', 'Furniture', 'Bedroom', '1', '349.99', '2023-07-15', 'Ergonomic office chair with lumbar support', 'https://via.placeholder.com/300x200?text=Office+Chair', '1'],
-        ['Robot Vacuum', 'Appliances', 'Living Room', '1', '399.99', '2023-08-01', 'Smart robot vacuum with app control', 'https://via.placeholder.com/300x200?text=Robot+Vacuum', '1'],
-        ['Winter Jacket', 'Clothing', 'Bedroom', '3', '129.99', '2023-09-10', 'Waterproof winter jacket', 'https://via.placeholder.com/300x200?text=Winter+Jacket', '2'],
-        ['Kitchen Knives Set', 'Appliances', 'Kitchen', '1', '89.99', '2023-05-25', 'Professional chef knife set with block', 'https://via.placeholder.com/300x200?text=Knife+Set', '1']
-    ];
 
-    try {
-        // First, clear the existing data
-        const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Sheet1!A:I:clear?key=${API_KEY}`;
-        await fetch(clearUrl, { method: 'POST' });
 
-        // Then add the sample data
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Sheet1!A1:I${sampleData.length}?valueInputOption=RAW&key=${API_KEY}`;
-        
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                values: sampleData
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
-            
-            if (response.status === 403) {
-                showPermissionError();
-            } else {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return;
-        }
-
-        console.log('Sample data added to Google Sheets successfully');
-        alert('Sample data has been added to your Google Sheet! Click Reload to see the data.');
-        
-    } catch (error) {
-        console.error('Error adding sample data to Google Sheets:', error);
-        showPermissionError();
-    }
-}
-
-function showManualSetupInstructions() {
-    const instructions = `
-MANUAL SETUP INSTRUCTIONS:
-
-1. Open your Google Sheet:
-   https://docs.google.com/spreadsheets/d/1nSxUmaf0bmc97YR_51-L0uLqi1AC6meFbFFNedZJUeE/edit
-
-2. Copy the sample data from the browser console (F12 → Console)
-
-3. Paste it into your sheet starting at cell A1
-
-4. Return to this app and click Reload to load the data
-
-The sample data will be logged to the console now...
-    `;
-    
-    alert(instructions);
-    
-    // Log the sample data to console for easy copying
-    console.log('%cSample Data for Copy-Paste:', 'font-weight: bold; color: blue;');
-    console.log('Item Name\tCategory\tLocation\tQuantity\tPrice\tPurchase Date\tDescription\tImage URL\tLow Stock Threshold');
-    console.log('MacBook Pro\tElectronics\tLiving Room\t1\t2499.99\t2023-01-15\t13-inch MacBook Pro with M2 chip\thttps://via.placeholder.com/300x200?text=MacBook+Pro\t1');
-    console.log('Gaming Chair\tFurniture\tBedroom\t0\t299.99\t2023-03-10\tErgonomic gaming chair with lumbar support\thttps://via.placeholder.com/300x200?text=Gaming+Chair\t1');
-    console.log('Coffee Maker\tAppliances\tKitchen\t1\t149.99\t2023-02-20\tProgrammable drip coffee maker\thttps://via.placeholder.com/300x200?text=Coffee+Maker\t1');
-    console.log('Wireless Headphones\tElectronics\tLiving Room\t2\t199.99\t2023-04-05\tNoise-cancelling wireless headphones\thttps://via.placeholder.com/300x200?text=Headphones\t1');
-    console.log('Dining Table\tFurniture\tKitchen\t1\t899.99\t2022-12-10\tSolid wood dining table for 6 people\thttps://via.placeholder.com/300x200?text=Dining+Table\t1');
-    console.log('Smart TV\tElectronics\tLiving Room\t1\t1299.99\t2023-06-20\t55-inch 4K Smart TV with HDR\thttps://via.placeholder.com/300x200?text=Smart+TV\t1');
-    console.log('Office Chair\tFurniture\tBedroom\t1\t349.99\t2023-07-15\tErgonomic office chair with lumbar support\thttps://via.placeholder.com/300x200?text=Office+Chair\t1');
-    console.log('Robot Vacuum\tAppliances\tLiving Room\t1\t399.99\t2023-08-01\tSmart robot vacuum with app control\thttps://via.placeholder.com/300x200?text=Robot+Vacuum\t1');
-    console.log('Winter Jacket\tClothing\tBedroom\t3\t129.99\t2023-09-10\tWaterproof winter jacket\thttps://via.placeholder.com/300x200?text=Winter+Jacket\t2');
-    console.log('Kitchen Knives Set\tAppliances\tKitchen\t1\t89.99\t2023-05-25\tProfessional chef knife set with block\thttps://via.placeholder.com/300x200?text=Knife+Set\t1');
-}
-
-function showPermissionError() {
-    const errorMsg = `
-WRITE PERMISSION REQUIRED
-
-To enable automated data upload, you need to:
-
-1. Open your Google Sheet
-2. Click "Share" → "Change to anyone with the link"
-3. Set permission to "Editor" (not just Viewer)
-
-OR use the manual setup method instead.
-
-Would you like to see manual setup instructions?
-    `;
-    
-    if (confirm(errorMsg)) {
-        showManualSetupInstructions();
-    }
-}
 
 // View switching functions
 function switchView(viewType) {
